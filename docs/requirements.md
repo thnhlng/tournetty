@@ -90,7 +90,6 @@ Rahmenbedingungen für Tournetty. Quelle: [`SPEC.md`](SPEC.md) §1–§9, Ziel u
 | NFR    | Non-Functional Requirement | NFR-001 |
 | C      | Constraint                 | C-001   |
 | Q      | Quality Goal (SPEC §3)     | Q1      |
-| OQ     | Open Question              | OQ-1    |
 
 ## Priority Reference
 
@@ -161,17 +160,6 @@ Priorisiert — bei Zielkonflikten gilt diese Reihenfolge (SPEC §3):
 | NfA-2 | Sicherheit                        | NFR-010, FR-026                            |
 | NfA-3 | Benutzerfreundlichkeit            | NFR-011                                    |
 | NfA-4 | Nachvollziehbarkeit               | NFR-012, NFR-013, NFR-014, FR-021, FR-022, FR-023 |
-
-## Open Questions
-
-| ID   | Open Question                                                                                                                                             | Status |
-|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
-| OQ-1 | NfA-2 fordert Kontosperrung nach fünf Fehlversuchen, während Team-Login ausgeschlossen ist — für wen gilt NFR-010? *Annahme: Organisationsteam und Vorort-Mitarbeitende.* | Open   |
-| OQ-2 | Welcher Grenzwert gilt am Anmelde-Endpunkt, und was passiert bei Überschreitung (NFR-016)? *Startwert 5 pro IP und Stunde, zu kalibrieren.*                | Open   |
-| OQ-3 | Braucht die Anmeldung eine Bestätigung per E-Mail (Double-Opt-in)? *Annahme: die Annahme durch den Organisator genügt.*                                    | Open   |
-| OQ-4 | Zielkonflikt FR-020 («möglichst wenig Änderungen») gegen NFR-003 (volle Feldauslastung): Wie wird die Abwägung dem Organisator angeboten — zwei Varianten oder ein Schieberegler? | Open   |
-| OQ-6 | Wahl des konkreten LLM-Providers und des Kostenrahmens (C-007).                                                                                            | Open   |
-| OQ-7 | Persistenz noch nicht entschieden: JPA/Hibernate oder JDBC, Migrationswerkzeug (C-004).                                                                    | Open   |
 
 ## Glossary
 
