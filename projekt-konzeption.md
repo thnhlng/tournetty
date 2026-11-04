@@ -378,8 +378,9 @@ Weitere getroffene Entscheide (Kurzfassung, hergeleitet in SPEC.md Teil B):
 | ADR-5 | HITL-Gate: kein KI-Vorschlag wird ohne Annahme persistiert, Protokoll append-only                                           | NfA-4                      |
 | ADR-6 | Turniermodi, Punktesysteme, Tie-Breaker, Pausen- und Platzregeln als Konfiguration                                          | Q3                         |
 | ADR-7 | Anmeldung über eigenes React-Frontend statt externem Formular-Dienst; öffentlicher `signup`-Endpunkt validiert serverseitig | NfA-3, Q3, Scope-Kontrolle |
+| ADR-8 | Umplanungsvorschläge fallen bei LLM-Ausfall auf den deterministischen Regelkern zurück; der Ablauf bricht nie ab        | Q1, NfA-1, ADR-3           |
 
-_Hinweis zur Nummerierung:_ ADR-1 bis ADR-7 sind die Kurzfassungen aus SPEC.md Teil B. ADR-001 und ADR-002 sind die vollständig ausgearbeiteten Records in diesem Dokument. ADR-001 entspricht ADR-1, ADR-002 entspricht ADR-7.
+_Hinweis zur Nummerierung:_ ADR-1 bis ADR-8 sind die Kurzfassungen aus SPEC.md Teil B. ADR-001, ADR-002 und ADR-003 sind die vollständig ausgearbeiteten Records in diesem Dokument. ADR-001 entspricht ADR-1, ADR-002 entspricht ADR-7, ADR-003 entspricht ADR-8.
 
 ---
 
@@ -452,6 +453,80 @@ Sicherheitlich ändert sich weniger als es scheint: Die Eingangsgrenze verschwin
 - Ein öffentlicher schreibender Endpunkt ist Angriffsfläche; Grenze 3 bekommt eine Ausnahme, die begründet und abgesichert sein muss
 - Fällt das Backend aus, können keine Anmeldungen eingehen; beim externen Dienst wären sie gepuffert worden
 - Die SPEC hat dafür noch keine nichtfunktionale Anforderung (Anmeldungen pro IP und Minute); offener Punkt in Abschnitt 7.9
+
+---
+
+# 3c. ADR-003: Regelbasierter Rückfallpfad für Umplanungsvorschläge
+
+**Status:** Accepted
+**Datum:** 31.10.2026
+
+## 3c.1 Kontext
+
+FR-020 verlangt bei einem Teamausfall einen KI-Vorschlag für einen angepassten Spielplan. ADR-3 verlangt gleichzeitig, dass der Spielplan deterministisch und regelbasiert entsteht und die KI nur vorschlägt. Beide Sätze lassen offen, was passiert, wenn der LLM-Provider nicht antwortet.
+
+Die Frage ist beim Ausarbeiten von UC-002 (Teams verwalten) aufgetaucht: Dort löst das Abmelden eines Teams nach der Spielplangenerierung eine Umplanung aus. Hängt dieser Weg allein am Provider, dann hängt eine fachliche Grundfunktion an einem externen Dienst — und zwar genau in der Situation, in der sie gebraucht wird, nämlich am Turniertag in einer Halle mit unzuverlässigem Netz.
+
+Zu berücksichtigen waren:
+
+- Q1 (Korrektheit) steht über allem; eine Umplanung muss die Invariante «ein Team, ein Slot» erfüllen, unabhängig davon, wer sie vorgeschlagen hat
+- Der deterministische Generator aus `schedule/generator/` kann einen gültigen Plan ohnehin erzeugen; das ist seine Aufgabe nach ADR-3
+- NfA-4 verlangt eine lesbare Begründung — das ist die Stärke des Modells, nicht des Generators
+- ADR-5 verlangt die menschliche Freigabe unabhängig von der Herkunft des Vorschlags
+
+## 3c.2 Entscheidung
+
+> **Umplanungsvorschläge entstehen immer über `proposal/` und brauchen immer eine Freigabe. Ist der LLM-Provider erreichbar, liefert er den Vorschlag samt Begründung. Ist er es nicht, erzeugt der deterministische Regelkern einen Vorschlag ohne Begründungstext, gekennzeichnet als «regelbasiert erzeugt». Der Ablauf bricht in keinem Fall ab.**
+
+### Begründung
+
+Die KI besitzt damit die Grundfähigkeit nicht, sie verbessert sie. Das ist dieselbe Linie, die ADR-3 für die initiale Erzeugung zieht, nur für den Umplanungsfall ausbuchstabiert: Der Regelkern kann jederzeit einen gültigen Plan rechnen, das Modell findet im Regelfall den Plan mit weniger Änderungen und erklärt ihn.
+
+Für den Organisator ist der Unterschied sichtbar, aber nicht blockierend: Er bekommt immer etwas vorgelegt, das er annehmen oder verwerfen kann (ADR-5). Fehlt die Begründung, weiss er, dass der Vorschlag regelbasiert entstand und er die Änderungsliste selbst beurteilen muss (FR-021).
+
+## 3c.3 Betrachtete Alternativen
+
+### Alternative A: Abmeldung blockieren, solange der Provider nicht antwortet
+
+**Vorteile:**
+
+- Einfachster Code; nur ein Pfad, der gebaut und getestet werden muss
+- Jeder Vorschlag hat garantiert eine Begründung (NfA-4 ohne Ausnahme)
+
+**Nachteile:**
+
+- Eine fachliche Kernfunktion fällt mit einem externen Dienst aus, und zwar am Turniertag
+- Widerspricht ADR-3: Der Spielplan hinge am Modell, nicht am Regelkern
+- Der Organisator hat keinen Weg, die Situation im System zu lösen
+
+### Alternative B: Bei Ausfall manuell umplanen (Drag-and-Drop über FR-013)
+
+**Vorteile:**
+
+- Kein zusätzlicher Generator-Pfad; nutzt eine Funktion, die ohnehin existiert
+- Der Organisator behält die volle Kontrolle
+
+**Nachteile:**
+
+- Verlagert die Arbeit auf den Menschen, also genau das, was die Vision beseitigen will
+- Umgeht `proposal/`: Die Änderungen entstehen ohne Vorschlag, Begründung und protokollierten Entscheid (NfA-4)
+- Bei mehreren betroffenen Partien fehleranfällig, auch wenn jede Verschiebung einzeln gegen die Invariante geprüft wird
+
+## 3c.4 Konsequenzen
+
+### Positive Konsequenzen
+
+- Das System bleibt ohne Netzverbindung handlungsfähig (NfA-1)
+- Die Spielplanerzeugung bleibt im Kern deterministisch und testbar, auch im Umplanungsfall (Q1, Q4)
+- `proposal/` und das HITL-Gate gelten unverändert für beide Quellen (ADR-5)
+- Der Testkorpus kann den Rückfallpfad ohne Provider prüfen, der Fake deckt den KI-Pfad ab (NfA-4)
+
+### Negative Konsequenzen / Trade-offs
+
+- Zwei Erzeugungspfade statt einem; beide müssen gegen dieselben Invarianten geprüft werden
+- Der regelbasierte Vorschlag optimiert nicht auf «möglichst wenig Änderungen» (FR-020) — er liefert einen gültigen, nicht notwendigerweise den schonendsten Plan
+- Vorschläge ohne Begründungstext schwächen NfA-4 im Ausfallfall; die Kennzeichnung muss in der UI eindeutig sein
+- Die Herkunft des Vorschlags wird Teil des Protokolls und des Datenmodells
 
 ---
 

@@ -8,11 +8,11 @@
 > von KI) sind bindend. Bei Widerspruch zwischen diesem Dokument und einem Prompt gilt dieses
 > Dokument — Abweichungen müssen explizit begründet und im Chat benannt werden.
 >
-> **Abgrenzung:** Das *Was* steht in [`SPEC.md`](SPEC.md), die ausführliche Herleitung mit
+> **Abgrenzung:** Das *Was* steht in [`SPEC.md`](docs/SPEC.md), die ausführliche Herleitung mit
 > C4-Sichten und ADR-Begründungen in [`projekt-konzeption.md`](projekt-konzeption.md).
 > Dieses Dokument ist die verdichtete Arbeitsfassung, kein Ersatz für die beiden.
 >
-> **Version:** 0.5 · **Stand:** 24.09.2026 · Gliederung angelehnt an arc42
+> **Version:** 0.7 · **Stand:** 04.11.2026 · Gliederung angelehnt an arc42
 
 ---
 
@@ -212,6 +212,7 @@ fachliche Korrektheit · Sicherheitsprobleme · Architekturkonformität · unnö
 | ADR-5   | HITL-Gate: kein Vorschlag wird ohne Annahme persistiert, Protokoll append-only                                                  | Accepted |
 | ADR-6   | Turniermodi, Punktesysteme, Tie-Breaker, Pausen- und Platzregeln als Konfiguration                                              | Accepted |
 | ADR-002 | Eigenes Anmeldeformular im React-Frontend statt externem Formular-Dienst; öffentlicher `signup`-Endpunkt validiert serverseitig | Accepted |
+| ADR-003 | Umplanungsvorschläge fallen bei LLM-Ausfall auf den deterministischen Regelkern zurück, gekennzeichnet und ohne Begründungstext; Freigabe gilt unverändert | Accepted |
 
 Volltext und Begründungen: `projekt-konzeption.md`.
 
@@ -234,8 +235,11 @@ Volltext und Begründungen: `projekt-konzeption.md`.
 * [ ] Wahl des konkreten LLM-Providers und des Kostenrahmens ist offen
 * [ ] Persistenz noch nicht implementiert: JPA/Hibernate oder JDBC, Migrationswerkzeug
   (Flyway/Liquibase)
-* [ ] Umgang mit bereits gespielten Partien eines ausgefallenen Teams (annullieren oder als
-  Forfait werten) muss als Konfigurationsregel definiert werden
+* [ ] `docs/entity-model.md` ist leer, hält aber inzwischen entschiedene Attribute zurück: der
+  Turnierstatus `PLANNING`/`RUNNING`/`FINISHED`/`ARCHIVED` aus UC-001 ist nirgends modelliert.
+* [ ] Wer setzt den Übergang `PLANNING` → `RUNNING` → `FINISHED` — leitet ihn das System aus
+  Turnierdatum und Erfassungsstand ab, oder setzt ihn der Organisator? *UC-001 setzt beim
+  Anlegen nur `PLANNING`; zu entscheiden beim Ausarbeiten von UC-006 (Phasen planen).*
 
 ---
 
@@ -248,5 +252,7 @@ Volltext und Begründungen: `projekt-konzeption.md`.
 | 0.3     | 07.09.2026 | ADR-002: eigenes Anmeldeformular statt externem Formular-Dienst; C4-Sichten, Vertrauensgrenze 2, Modulstruktur (`intake` → `signup`) und Sicherheits-Leitplanken angepasst                                                            |
 | 0.4     | 24.09.2026 | Stakeholder überarbeitet: auf vier Stakeholder verdichtet, Akteurstabelle und C4-Diagramme angeglichen                                                                                                                                 |
 | 0.5     | 24.09.2026 | Als eigenständige Datei `PROJECT_CONTEXT.md` aus `projekt-konzeption.md` §7 herausgelöst; Verbindlichkeits- und Abgrenzungshinweis ergänzt; Ist-Stand von Modulstruktur und Stack gegenüber dem Zielbild kenntlich gemacht; `CLAUDE.md` bindet das Dokument als KI-Kontext ein |
+| 0.6     | 31.10.2026 | UC-002 (Teams verwalten) ausgearbeitet; offener Punkt zum Umgang mit gespielten Partien eines ausgefallenen Teams entschieden — Konfigurationsregel `withdrawalHandling` mit `ANNUL`/`FORFEIT`; ADR-003 ergänzt (regelbasierter Rückfallpfad bei LLM-Ausfall) |
+| 0.7     | 04.11.2026 | UC-001 (Turnier verwalten) ausgearbeitet in `docs/use-cases/uc-001-turnier-verwalten.md`; drei Fachentscheide festgelegt — hartes Löschen nur ohne erfasste Ergebnisse, danach Statuswechsel auf `ARCHIVED` (BR-003/BR-007, NFR-002); Turniername eindeutig je Kalenderjahr (BR-002); Turnier-Stammdaten sind Name, Datum und Ort, Felder/Regeln/Phasen bleiben bei UC-004/005/006. Turnierstatus `PLANNING`/`RUNNING`/`FINISHED`/`ARCHIVED` eingeführt; FR-001 und FR-005 in `docs/requirements.md` auf UC-001 verlinkt |
 | ...     |            |                                                                                                                                                                                                                                        |
 | 1.0     |            |                                                                                                                                                                                                                                        |
