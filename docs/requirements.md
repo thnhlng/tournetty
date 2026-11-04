@@ -37,29 +37,47 @@ Rahmenbedingungen für Tournetty. Quelle: [`SPEC.md`](SPEC.md) §1–§9, Ziel u
 
 ## Non-Functional Requirements
 
-| ID      | Title                         | Requirement                                                                                                           | Category        | Priority | Status |
-|---------|-------------------------------|-----------------------------------------------------------------------------------------------------------------------|-----------------|----------|--------|
-| NFR-001 | Invariante «ein Team, ein Slot» | Kein Team darf im selben Zeitfenster für zwei Partien angesetzt sein. Die Prüfung liegt an einer Stelle und ist getestet. | Quality         | High     | Open   |
-| NFR-002 | Nachrechenbarkeit             | Tabellenstände und K.-o.-Weiterleitungen müssen aus den erfassten Ergebnissen reproduzierbar sein.                      | Quality         | High     | Open   |
-| NFR-003 | Feldauslastung                | Die verfügbaren Felder müssen pro Zeitfenster ausgelastet sein.                                                        | Quality         | Medium   | Open   |
-| NFR-004 | Konfigurierbarkeit            | Turniermodi, Kategorien, Punktesysteme, Pausenzeiten und Platzregeln sind Konfiguration, nicht Code. Ein neues Punktesystem berührt genau ein Paket. | Maintainability | High     | Open   |
-| NFR-005 | Deterministisches Verhalten   | Spielplanerstellung, Tabellenberechnung, Tie-Breaker und Regelprüfungen liefern bei gleicher Eingabe dasselbe Ergebnis. | Quality         | High     | Open   |
-| NFR-006 | Testbarkeit des KI-Pfads      | Der KI-Pfad muss ohne Aufruf des echten Providers automatisiert prüfbar sein.                                           | Quality         | High     | Open   |
-| NFR-007 | Sofortige Bestätigung         | Anmeldung und Ergebniserfassung werden sofort bestätigt, ohne auf eine Planberechnung zu warten.                        | Performance     | High     | Open   |
-| NFR-008 | Berechnung im Hintergrund     | Spielplan- und Vorschlagsberechnungen dürfen nach der Bestätigung im Hintergrund laufen; der Zustand ist für den Nutzer sichtbar. | Performance     | Medium   | Open   |
-| NFR-009 | Gleichzeitige Nutzende        | Das System trägt mindestens 50 gleichzeitige Nutzende.                                                                 | Scalability     | Medium   | Open   |
-| NFR-010 | Kontosperrung                 | Nach fünf fehlgeschlagenen Login-Versuchen wird das Konto gesperrt.                                                     | Security        | High     | Open   |
-| NFR-011 | Responsive Bedienung          | Die Anwendung ist auf Mobilgerät und Monitor bedienbar.                                                                | Usability       | High     | Open   |
-| NFR-012 | Begründete KI-Ausgabe         | Jeder KI-Vorschlag enthält eine für den Organisator lesbare Begründung.                                                | Usability       | High     | Open   |
-| NFR-013 | Freigabe vor Wirkung          | Ein KI-Vorschlag verändert keine Daten, bevor ein Mensch ihn annimmt.                                                   | Security        | High     | Open   |
-| NFR-014 | Append-only-Protokoll         | Vorschlag, Begründung und Entscheid werden protokolliert und nicht überschrieben oder gelöscht.                        | Reliability     | High     | Open   |
-| NFR-015 | Serverseitige Validierung     | Anmeldedaten gelten als ungeprüfte Fremddaten und werden serverseitig validiert und normalisiert. Browser-Validierung zählt nicht als Schutz. | Security        | High     | Open   |
-| NFR-016 | Rate-Limit Anmeldung          | Der öffentliche Anmelde-Endpunkt ist pro IP begrenzt. Startwert zur Kalibrierung: 5 Anmeldungen pro IP und Stunde.      | Security        | High     | Open   |
-| NFR-017 | Pseudonymisierter KI-Kontext  | Der an den Provider gesendete Planungskontext enthält keine Klarnamen und keine Kontaktdaten.                           | Security        | High     | Open   |
-| NFR-018 | Zweistufige Antwortprüfung    | Jede Modellantwort wird gegen ein Schema und gegen die Turnierregeln geprüft, bevor sie angezeigt wird.                 | Security        | High     | Open   |
-| NFR-019 | Geheimnisverwaltung           | API-Keys und Geheimnisse liegen ausschliesslich in Umgebungsvariablen, nie im Repository.                               | Security        | High     | Open   |
-| NFR-020 | Verständliche Fehler          | Fachliche Fehler werden mit klarer, lesbarer Meldung zurückgegeben; Exceptions werden nicht still verschluckt.          | Usability       | Medium   | Open   |
-| NFR-021 | Versionierter Testkorpus      | Für Teamausfall, ungerade Teamzahl, Gleichstand und Feldausfall existieren versionierte Testfälle mit erwartetem Ergebnis. | Quality         | Medium   | Open   |
+Jede Anforderung ist nach SMART formuliert: die Spalte **Requirement** nennt die messbare
+Schwelle, die Spalte **Nachweis** das Verfahren, mit dem sie geprüft wird. Zum Zeitbezug siehe
+[Verifikationszeitpunkte](#verifikationszeitpunkte) unter der Tabelle.
+
+| ID      | Title                           | Requirement                                                                                                                                                                                                                            | Nachweis                                                                                                                                                 | Category        | Priority | Status |
+|---------|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------|--------|
+| NFR-001 | Invariante «ein Team, ein Slot» | Kein Team ist im selben Zeitfenster für zwei Partien angesetzt — weder im generierten Plan noch nach einer Verschiebung oder einem angenommenen KI-Vorschlag.                                                                            | Invariantentest über generierte Pläne, manuelle Verschiebungen und angenommene Vorschläge. Die Prüfung ist an genau einer Stelle implementiert (ADR-001). | Quality         | High     | Open   |
+| NFR-002 | Nachrechenbarkeit               | Tabellenstände und K.-o.-Weiterleitungen sind allein aus den erfassten Ergebnissen reproduzierbar; eine Neuberechnung liefert identische Werte.                                                                                          | Korpustest: Neuberechnung aus den gespeicherten Ergebnissen ergibt dieselbe Tabelle und denselben K.-o.-Baum.                                            | Quality         | High     | Open   |
+| NFR-003 | Feldauslastung                  | In jedem Zeitfenster sind mindestens 90 % der verfügbaren Felder belegt, solange ansetzbare Partien offen sind. Ein Feld bleibt nur leer, wenn keine Partie NFR-001 und die Pausenregel erfüllt.                                         | Auslastungsmessung je Zeitfenster über den Testkorpus (NFR-021); jedes leer gebliebene Feld wird mit Grund protokolliert.                                | Quality         | Medium   | Open   |
+| NFR-004 | Konfigurierbarkeit              | Turniermodi, Kategorien, Punktesysteme, Pausenzeiten und Platzregeln sind Konfiguration, nicht Code. Ein neues Punktesystem wird ohne Codeänderung ausserhalb von `scoring/` ergänzt.                                                    | Probeweises Ergänzen eines Punktesystems allein über Konfiguration; Paketabhängigkeitstest zeigt keine Änderung ausserhalb `scoring/`.                   | Maintainability | High     | Open   |
+| NFR-005 | Deterministisches Verhalten     | Spielplanerstellung, Tabellenberechnung, Tie-Breaker und Regelprüfungen liefern bei gleicher Eingabe dasselbe Ergebnis — kein Zufall ohne festen Seed, keine Abhängigkeit von Uhrzeit oder Iterationsreihenfolge.                        | Zehn Wiederholungen derselben Eingabe ergeben identische Ausgabe.                                                                                        | Quality         | High     | Open   |
+| NFR-006 | Testbarkeit des KI-Pfads        | Der KI-Pfad ist vollständig automatisiert prüfbar, ohne den echten Provider aufzurufen.                                                                                                                                                  | Die Testsuite läuft vollständig gegen `FakeAdvisor`, ohne ausgehenden Netzwerkzugriff.                                                                   | Quality         | High     | Open   |
+| NFR-007 | Sofortige Bestätigung           | Anmeldung und Ergebniserfassung antworten im p95 unter 300 ms und im p99 unter 800 ms bei 50 gleichzeitigen Nutzenden, ohne auf eine Planberechnung zu warten.                                                                           | Lasttest mit 50 gleichzeitigen Nutzenden, Messung von p95 und p99 am jeweiligen Endpunkt.                                                                | Performance     | High     | Open   |
+| NFR-008 | Berechnung im Hintergrund       | Plan- und Vorschlagsberechnungen laufen nach der Bestätigung als Job mit den Zuständen `QUEUED`, `RUNNING`, `DONE`, `FAILED`. Der Zustand ist abfragbar und wechselt innerhalb von 2 s; ein Plan für 24 Teams ist in unter 10 s fertig.  | Jobtest: Zustandsübergänge und Laufzeit für ein Turnier mit 24 Teams und 4 Feldern.                                                                      | Performance     | Medium   | Open   |
+| NFR-009 | Gleichzeitige Nutzende          | Bei 50 gleichzeitigen Nutzenden über 10 Minuten bleibt die Fehlerrate unter 1 % und p95 der Lesesichten unter 1 s.                                                                                                                       | Lasttest über 10 Minuten; Fehlerrate und p95 werden dokumentiert.                                                                                        | Scalability     | Medium   | Open   |
+| NFR-010 | Kontosperrung                   | Nach fünf fehlgeschlagenen Login-Versuchen wird das Konto für 15 Minuten gesperrt. Eine erfolgreiche Anmeldung setzt den Zähler zurück; vorzeitig entsperrt nur das Organisationsteam.                                                   | Integrationstest: nach fünf Fehlversuchen folgt die Sperrantwort auch bei korrektem Passwort, bis die Sperre abläuft.                                    | Security        | High     | Open   |
+| NFR-011 | Responsive Bedienung            | Alle Sichten sind ab 360 px Breite ohne horizontales Scrollen bedienbar; Bedienelemente messen mindestens 44 × 44 px.                                                                                                                    | Prüfung bei 360 px, 768 px und 1440 px Breite auf horizontales Scrollen und Grösse der Trefferflächen.                                                   | Usability       | High     | Open   |
+| NFR-012 | Begründete KI-Ausgabe           | Jeder KI-Vorschlag enthält eine Begründung von 1–3 Sätzen, die jede geänderte Partie mit alter und neuer Zuteilung nennt. Ausnahme: der Rückfallpfad nach ADR-003 ist gekennzeichnet und ohne Begründungstext.                           | Schemaprüfung auf Vorhandensein, Länge und Vollständigkeit des Begründungsfelds; eigener Test für den gekennzeichneten Rückfall.                         | Usability       | High     | Open   |
+| NFR-013 | Freigabe vor Wirkung            | Ein KI-Vorschlag verändert keine Daten, bevor ein Mensch ihn annimmt.                                                                                                                                                                   | Test: ein verworfener Vorschlag hinterlässt keine Änderung an Partien, Feldzuteilungen oder Ergebnissen.                                                 | Security        | High     | Open   |
+| NFR-014 | Append-only-Protokoll           | Vorschlag, Begründung und Entscheid werden protokolliert und danach nicht überschrieben oder gelöscht.                                                                                                                                   | Die Protokolltabelle erlaubt nur `INSERT`; ein Test auf `UPDATE` und `DELETE` muss scheitern.                                                            | Reliability     | High     | Open   |
+| NFR-015 | Serverseitige Validierung       | Anmeldedaten gelten als ungeprüfte Fremddaten und werden ausschliesslich in `signup/` serverseitig validiert und normalisiert. Browser-Validierung zählt nicht als Schutz.                                                               | Endpunkttest mit fehlenden, überlangen, falsch typisierten und manipulierten Feldern sowie doppeltem Teamnamen — ohne Beteiligung des Frontends.         | Security        | High     | Open   |
+| NFR-016 | Rate-Limit Anmeldung            | Der öffentliche Anmelde-Endpunkt erlaubt höchstens 5 Anmeldungen pro IP und Stunde; darüber antwortet er mit HTTP 429 und `Retry-After`.                                                                                                 | Endpunkttest: die sechste Anmeldung derselben IP innerhalb einer Stunde ergibt 429. Der Schwellwert bleibt kalibrierbar (`PROJECT_CONTEXT.md` §9).       | Security        | High     | Open   |
+| NFR-017 | Pseudonymisierter KI-Kontext    | Der an den Provider gesendete Planungskontext enthält keine Teamnamen, Personennamen, E-Mail-Adressen und Telefonnummern, sondern ausschliesslich Pseudonyme (`T1`…`Tn`).                                                                | Test auf dem erzeugten Anfragetext: keines der Klartextfelder der Anmeldung kommt darin vor.                                                              | Security        | High     | Open   |
+| NFR-018 | Zweistufige Antwortprüfung      | Jede Modellantwort wird gegen ein Schema und gegen die Turnierregeln geprüft, bevor sie angezeigt wird.                                                                                                                                  | Tests mit schemaverletzender und mit regelverletzender Antwort: der Vorschlag wird verworfen und nicht angezeigt.                                        | Security        | High     | Open   |
+| NFR-019 | Geheimnisverwaltung             | API-Keys und Geheimnisse liegen ausschliesslich in Umgebungsvariablen, nie im Repository.                                                                                                                                                | Secret-Scan über das Repository im Build; `application.properties` enthält nur Platzhalter oder Verweise auf Umgebungsvariablen.                         | Security        | High     | Open   |
+| NFR-020 | Verständliche Fehler            | Fachliche Fehler liefern HTTP 4xx mit stabilem Fehlercode, betroffenem Feld und einer Meldung ohne Stacktrace. Exceptions werden nicht still verschluckt.                                                                                | Endpunkttests auf Fehlercode und Feldangabe; Review: kein `catch`-Block ohne Behandlung oder Protokolleintrag.                                           | Usability       | Medium   | Open   |
+| NFR-021 | Versionierter Testkorpus        | Für Teamausfall, ungerade Teamzahl, Gleichstand und Feldausfall existieren versionierte Testfälle mit erwartetem Ergebnis.                                                                                                               | Die vier Fälle liegen versioniert im Repository, laufen im Build und vergleichen gegen das hinterlegte Sollergebnis.                                     | Quality         | Medium   | Open   |
+
+### Verifikationszeitpunkte
+
+Das *T* in SMART bezieht sich bei nichtfunktionalen Anforderungen auf den Zeitpunkt der
+Verifikation, nicht auf eine Umsetzungsfrist:
+
+* **Bei jedem Build** — NFR-001 bis NFR-006, NFR-010, NFR-012 bis NFR-021: automatisiert in der
+  Testsuite.
+* **Vor dem ersten produktiven Turniertag** — NFR-007, NFR-008, NFR-009: einmaliger Lasttest,
+  dessen Messwerte dokumentiert werden.
+* **Vor jedem Release** — NFR-011: manuelle Prüfung der drei Breakpoints.
+
+Eine Anforderung wechselt auf `Verified`, sobald ihr Nachweis erbracht und das Ergebnis
+festgehalten ist.
 
 ## Constraints
 
@@ -137,29 +155,40 @@ Rahmenbedingungen für Tournetty. Quelle: [`SPEC.md`](SPEC.md) §1–§9, Ziel u
 
 Priorisiert — bei Zielkonflikten gilt diese Reihenfolge (SPEC §3):
 
-| ID | Quality Goal     | Erfüllt durch           |
-|----|------------------|-------------------------|
-| Q1 | Korrektheit      | NFR-001, NFR-002        |
-| Q2 | Regelmässigkeit  | NFR-003                 |
-| Q3 | Wartbarkeit      | NFR-004                 |
-| Q4 | Testbarkeit      | NFR-005, NFR-006, NFR-021 |
-| Q5 | Performance      | NFR-007, NFR-008, NFR-009 |
+| ID | Quality Goal                     | Erfüllt durch                                                   |
+|----|----------------------------------|-----------------------------------------------------------------|
+| Q1 | Korrektheit                      | NFR-001, NFR-002                                                |
+| Q2 | Regelmässigkeit                  | NFR-003                                                         |
+| Q3 | Wartbarkeit                      | NFR-004                                                         |
+| Q4 | Testbarkeit                      | NFR-005, NFR-006, NFR-021                                       |
+| Q5 | Performance                      | NFR-007, NFR-008, NFR-009                                       |
+| Q6 | Sicherheit und Nachvollziehbarkeit | NFR-010, NFR-013, NFR-014, NFR-015, NFR-016, NFR-017, NFR-018, NFR-019 |
+
+> **Q6 steht noch nicht in `SPEC.md` §3.** Das Ziel ergibt sich aus den Sicherheits-Leitplanken
+> (`PROJECT_CONTEXT.md` §6); ohne es bleiben NFR-015 bis NFR-019 ohne Qualitätsziel. Bei der
+> nächsten Überarbeitung von `SPEC.md` §3 ist es dort nachzutragen, inklusive seiner Stellung in
+> der Konfliktreihenfolge.
 
 ## Traceability to SPEC.md
 
-| SPEC | Titel                              | Anforderungen                              |
-|------|------------------------------------|--------------------------------------------|
-| FR-1 | CRUD für Domain-Objekte            | FR-001, FR-002, FR-003, FR-004, FR-005     |
-| FR-2 | Spielplan-Generierung              | FR-011, FR-020                             |
-| FR-3 | Phasen für den Turnierablauf       | FR-009, FR-010                             |
-| FR-4 | Zählen                             | FR-014, FR-015, FR-016                     |
-| FR-5 | Feldzuteilung                      | FR-012, FR-013                             |
-| FR-6 | Dashboard                          | FR-017, FR-018                             |
-| FR-7 | Anmeldung über eigenes Formular    | FR-006, FR-007, FR-008                     |
-| NfA-1 | Zuverlässigkeit und Stabilität    | NFR-009                                    |
-| NfA-2 | Sicherheit                        | NFR-010, FR-026                            |
-| NfA-3 | Benutzerfreundlichkeit            | NFR-011                                    |
-| NfA-4 | Nachvollziehbarkeit               | NFR-012, NFR-013, NFR-014, FR-021, FR-022, FR-023 |
+| SPEC  | Titel                           | Anforderungen                                                                      |
+|-------|---------------------------------|------------------------------------------------------------------------------------|
+| FR-1  | CRUD für Domain-Objekte         | FR-001, FR-002, FR-003, FR-004, FR-005                                             |
+| FR-2  | Spielplan-Generierung           | FR-011, FR-020, NFR-001, NFR-005                                                   |
+| FR-3  | Phasen für den Turnierablauf    | FR-009, FR-010                                                                     |
+| FR-4  | Zählen                          | FR-014, FR-015, FR-016, NFR-002                                                    |
+| FR-5  | Feldzuteilung                   | FR-012, FR-013, NFR-003                                                            |
+| FR-6  | Dashboard                       | FR-017, FR-018, NFR-011                                                            |
+| FR-7  | Anmeldung über eigenes Formular | FR-006, FR-007, FR-008, NFR-015, NFR-016                                           |
+| NfA-1 | Zuverlässigkeit und Stabilität  | NFR-008, NFR-009, NFR-014                                                          |
+| NfA-2 | Sicherheit                      | FR-026, NFR-010, NFR-013, NFR-015, NFR-016, NFR-017, NFR-018, NFR-019              |
+| NfA-3 | Benutzerfreundlichkeit          | NFR-007, NFR-011, NFR-012, NFR-020                                                 |
+| NfA-4 | Nachvollziehbarkeit             | FR-021, FR-022, FR-023, NFR-012, NFR-013, NFR-014                                  |
+
+**Ohne Entsprechung in `SPEC.md`:** NFR-004 (Konfigurierbarkeit), NFR-006 (Testbarkeit des
+KI-Pfads) und NFR-021 (Testkorpus) tracen nur über die Qualitätsziele Q3 und Q4 — `SPEC.md` §6
+führt dafür keine NfA. Entweder dort ergänzen oder die Herleitung über Q3/Q4 als ausreichend
+festhalten.
 
 ## Glossary
 
