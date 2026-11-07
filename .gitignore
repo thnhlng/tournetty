@@ -1,5 +1,5 @@
 # Monorepo-weite Ignores. Backend-spezifische Regeln stehen in
-# tournetty-webapp/.gitignore, Frontend-spezifische in frontend/.gitignore.
+# tournetty-webapp/.gitignore, Frontend-spezifische in tournetty-ui/.gitignore.
 
 ### macOS ###
 .DS_Store
