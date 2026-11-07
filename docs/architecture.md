@@ -1,7 +1,7 @@
 # Architecture
 
 Dieses Dokument enthält die Architektursichten für Tournetty: Kontextsicht und Containersicht.
-Der Paketschnitt steht in [`package-structure.md`](package-structure.md). Es beschreibt das
+Der Paketschnitt steht in [`package-structure.md`](../tournetty-webapp/.claude/context/package-structure.md). Es beschreibt das
 **Wie** — das **Was** steht in [`SPEC.md`](SPEC.md) §1–§9 und
 [`requirements.md`](requirements.md), die Architektur-Entscheide (ADR-1 bis ADR-7) in
 [`SPEC.md`](SPEC.md#die-entscheide-auf-die-sich-alles-folgende-beruft).
@@ -80,4 +80,4 @@ Vier Dinge liest man aus dem Bild ab:
 
 ## Paketstruktur
 
-Ausgelagert nach [`package-structure.md`](package-structure.md).
+Ausgelagert nach [`package-structure.md`](../tournetty-webapp/.claude/context/package-structure.md).
